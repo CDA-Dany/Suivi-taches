@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Tâches en cours</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    ul { list-style: none; padding: 0; max-width: 600px; margin: auto; }
+    li { background: #fff; padding: 15px; margin: 10px 0; border-radius: 10px;
+         font-size: 1.2em; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <h1>🟢 Tâches en cours</h1>
+  <ul id="tacheList"><li>Chargement…</li></ul>
+  <script>
+    async function chargerTaches() {
+      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=0&single=true&output=csv";
+      try {
+        const resp = await fetch(url);
+        const text = await resp.text();
+        const lignes = text.trim().split(/\r?\n/).map(l => l.split(","));
+        const données = lignes.slice(1);
+        const enCours = données.filter(r => r[1]?.toLowerCase().includes("en cours"));
+        const ul = document.getElementById("tacheList");
+        ul.innerHTML = "";
+        if (enCours.length === 0) {
+          ul.innerHTML = "<li>Aucune tâche en cours</li>";
+        } else {
+          enCours.forEach(r => {
+            const li = document.createElement("li");
+            li.textContent = r[0];
+            ul.appendChild(li);
+          });
+        }
+      } catch (err) {
+        document.getElementById("tacheList").innerHTML = "<li>Erreur de chargement</li>";
+        console.error(err);
+      }
+    }
+    chargerTaches();
+    setInterval(chargerTaches, 15000);
+  </script>
+</body>
+</html>
