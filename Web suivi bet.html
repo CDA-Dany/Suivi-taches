@@ -2,46 +2,124 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Tâches en cours</title>
+  <title>Tâches de Dany et Pierre</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-    h1 { text-align: center; color: #333; }
-    ul { list-style: none; padding: 0; max-width: 600px; margin: auto; }
-    li { background: #fff; padding: 15px; margin: 10px 0; border-radius: 10px;
-         font-size: 1.2em; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    body {
+      font-family: sans-serif;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .colonnes {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+    }
+    .colonne {
+      flex: 1 1 400px;
+      max-width: 500px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #444;
+    }
+    h3 {
+      margin-top: 25px;
+      color: #666;
+      font-size: 1em;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+    }
+    li {
+      background: #f9f9f9;
+      padding: 12px;
+      margin: 6px 0;
+      border-radius: 8px;
+      font-size: 1.1em;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
   </style>
 </head>
 <body>
-  <h1>🟢 Tâches en cours</h1>
-  <ul id="tacheList"><li>Chargement…</li></ul>
+  <h1>Suivi des tâches – Dany & Pierre</h1>
+  <div class="colonnes">
+    <div class="colonne">
+      <h2>Dany</h2>
+      <h3>🟢 En cours</h3>
+      <ul id="danyCours"><li>Chargement…</li></ul>
+      <h3>🕒 À venir</h3>
+      <ul id="danyVenir"><li>Chargement…</li></ul>
+    </div>
+
+    <div class="colonne">
+      <h2>Pierre</h2>
+      <h3>🟢 En cours</h3>
+      <ul id="pierreCours"><li>Chargement…</li></ul>
+      <h3>🕒 À venir</h3>
+      <ul id="pierreVenir"><li>Chargement…</li></ul>
+    </div>
+  </div>
+
   <script>
-    async function chargerTaches() {
-      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=0&single=true&output=csv";
+    async function chargerTableau(url, idCours, idVenir) {
       try {
         const resp = await fetch(url);
         const text = await resp.text();
         const lignes = text.trim().split(/\r?\n/).map(l => l.split(","));
         const données = lignes.slice(1);
-        const enCours = données.filter(r => r[1]?.toLowerCase().includes("en cours"));
-        const ul = document.getElementById("tacheList");
-        ul.innerHTML = "";
-        if (enCours.length === 0) {
-          ul.innerHTML = "<li>Aucune tâche en cours</li>";
-        } else {
-          enCours.forEach(r => {
-            const li = document.createElement("li");
-            li.textContent = r[0];
-            ul.appendChild(li);
-          });
-        }
+
+        const cours = [];
+        const avenir = [];
+
+        données.forEach(row => {
+          const tache = row[0]?.trim();
+          const statut = row[1]?.toLowerCase().trim() || "";
+          if (!tache) return;
+          if (statut === "en cours") cours.push(tache);
+          else avenir.push(tache);
+        });
+
+        document.getElementById(idCours).innerHTML =
+          cours.length ? cours.map(t => `<li>${t}</li>`).join("") : "<li>Aucune tâche</li>";
+
+        document.getElementById(idVenir).innerHTML =
+          avenir.length ? avenir.map(t => `<li>${t}</li>`).join("") : "<li>Aucune tâche</li>";
+
       } catch (err) {
-        document.getElementById("tacheList").innerHTML = "<li>Erreur de chargement</li>";
-        console.error(err);
+        document.getElementById(idCours).innerHTML = "<li>Erreur de chargement</li>";
+        document.getElementById(idVenir).innerHTML = "<li>Erreur de chargement</li>";
+        console.error("Erreur de chargement :", err);
       }
     }
-    chargerTaches();
-    setInterval(chargerTaches, 15000);
+
+    function actualiserTous() {
+      // Dany
+      chargerTableau(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=0&single=true&output=csv",
+        "danyCours", "danyVenir"
+      );
+
+      // Pierre
+      chargerTableau(
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=1909061419&single=true&output=csv",
+        "pierreCours", "pierreVenir"
+      );
+    }
+
+    actualiserTous();
+    setInterval(actualiserTous, 15000);
   </script>
 </body>
 </html>
