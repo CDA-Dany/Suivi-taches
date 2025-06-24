@@ -142,17 +142,22 @@
     }
 
     function renderProgressBar(project, phases) {
+      const headers = ["Permis", "Prédim", "Fab", "Plan de pose", "Liste de vérification", "Commandes Tôle, Pannes et Platines"];
       const total = phases.length;
       let done = 0;
       let color = "#4caf50";
       let lastStatus = "";
+      let lastHeader = "";
 
-      phases.forEach(val => {
+      phases.forEach((val, i) => {
         val = val?.toLowerCase().trim();
         if (val === "terminé" || val === "terminée") {
           done++;
         }
-        if (val) lastStatus = val;
+        if (val) {
+          lastStatus = val;
+          lastHeader = headers[i];
+        }
       });
 
       if (lastStatus === "bloqué") color = "#f44336";
@@ -166,7 +171,7 @@
       div.innerHTML = `
         <div class="bar-header">
           <span>${project}</span>
-          <span class="status-label" style="background:${color}">${phases[phases.length - 1]} (${lastStatus})</span>
+          <span class="status-label" style="background:${color}">${lastHeader} (${lastStatus})</span>
         </div>
         <div class="bar-container">
           <div class="bar" style="width: ${pourcentage}%; background: ${color};"></div>
