@@ -2,124 +2,100 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Tâches de Dany et Pierre</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi des Tâches</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background-color: #f0f0f0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .colonnes {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 40px;
-    }
-    .colonne {
-      flex: 1 1 400px;
-      max-width: 500px;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      color: #444;
-    }
-    h3 {
-      margin-top: 25px;
-      color: #666;
-      font-size: 1em;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 10px;
-    }
-    li {
-      background: #f9f9f9;
-      padding: 12px;
-      margin: 6px 0;
-      border-radius: 8px;
-      font-size: 1.1em;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .container { display: flex; gap: 40px; }
+    .column { flex: 1; }
+    h2 { text-align: center; }
+    .bar-container { background: #eee; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+    .bar { height: 20px; transition: width 0.3s ease; }
+    .project { margin-bottom: 15px; }
   </style>
 </head>
 <body>
-  <h1>Suivi des tâches – Dany & Pierre</h1>
-  <div class="colonnes">
-    <div class="colonne">
+  <h1>Suivi des tâches</h1>
+  <div class="container">
+    <div class="column">
       <h2>Dany</h2>
-      <h3>🟢 En cours</h3>
-      <ul id="danyCours"><li>Chargement…</li></ul>
-      <h3>🕒 À venir</h3>
-      <ul id="danyVenir"><li>Chargement…</li></ul>
+      <ul id="dany"></ul>
     </div>
-
-    <div class="colonne">
+    <div class="column">
       <h2>Pierre</h2>
-      <h3>🟢 En cours</h3>
-      <ul id="pierreCours"><li>Chargement…</li></ul>
-      <h3>🕒 À venir</h3>
-      <ul id="pierreVenir"><li>Chargement…</li></ul>
+      <ul id="pierre"></ul>
     </div>
   </div>
 
+  <h2>Suivi des Projets</h2>
+  <div id="projets"></div>
+
   <script>
-    async function chargerTableau(url, idCours, idVenir) {
-      try {
-        const resp = await fetch(url);
-        const text = await resp.text();
-        const lignes = text.trim().split(/\r?\n/).map(l => l.split(","));
-        const données = lignes.slice(1);
-
-        const cours = [];
-        const avenir = [];
-
-        données.forEach(row => {
-          const tache = row[0]?.trim();
-          const statut = row[1]?.toLowerCase().trim() || "";
-          if (!tache) return;
-          if (statut === "en cours") cours.push(tache);
-          else avenir.push(tache);
-        });
-
-        document.getElementById(idCours).innerHTML =
-          cours.length ? cours.map(t => `<li>${t}</li>`).join("") : "<li>Aucune tâche</li>";
-
-        document.getElementById(idVenir).innerHTML =
-          avenir.length ? avenir.map(t => `<li>${t}</li>`).join("") : "<li>Aucune tâche</li>";
-
-      } catch (err) {
-        document.getElementById(idCours).innerHTML = "<li>Erreur de chargement</li>";
-        document.getElementById(idVenir).innerHTML = "<li>Erreur de chargement</li>";
-        console.error("Erreur de chargement :", err);
-      }
+    async function fetchCSV(url) {
+      const res = await fetch(url);
+      const text = await res.text();
+      return text.split('\n').map(row => row.split(','));
     }
 
-    function actualiserTous() {
-      // Dany
-      chargerTableau(
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=0&single=true&output=csv",
-        "danyCours", "danyVenir"
-      );
-
-      // Pierre
-      chargerTableau(
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=1909061419&single=true&output=csv",
-        "pierreCours", "pierreVenir"
-      );
+    function renderTasks(data, targetId) {
+      const list = document.getElementById(targetId);
+      data.forEach(row => {
+        if (row[1]?.toLowerCase() === "en cours") {
+          const li = document.createElement("li");
+          li.textContent = row[0];
+          list.appendChild(li);
+        }
+      });
     }
 
-    actualiserTous();
-    setInterval(actualiserTous, 15000);
+    function renderProgressBar(project, phases) {
+      const total = phases.length;
+      let done = 0;
+      let color = "#4caf50"; // par défaut vert
+
+      phases.forEach(phase => {
+        const val = phase?.toLowerCase().trim();
+        if (val === "terminé" || val === "terminée") {
+          done++;
+        } else if (val === "bloqué") {
+          color = "#f44336";
+        } else if (val === "en attente" && color !== "#f44336") {
+          color = "#ff9800";
+        } else if (val === "en cours" && !["#f44336", "#ff9800"].includes(color)) {
+          color = "#2196f3";
+        }
+      });
+
+      const pourcentage = (done / total) * 100;
+
+      const div = document.createElement("div");
+      div.className = "project";
+      div.innerHTML = `
+        <strong>${project}</strong>
+        <div class="bar-container">
+          <div class="bar" style="width: ${pourcentage}%; background: ${color};"></div>
+        </div>
+      `;
+      document.getElementById("projets").appendChild(div);
+    }
+
+    async function main() {
+      const danyData = await fetchCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=0&single=true&output=csv");
+      const pierreData = await fetchCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=1909061419&single=true&output=csv");
+      const projetData = await fetchCSV("https://docs.google.com/spreadsheets/d/e/2PACX-1vTjhn9zLttac-i4uLNhzuvtyg-TnkUAUXHmDIL_l21zRt1IwYKVapzhDxY83PK081H1O5nWo5UP43jz/pub?gid=830233333&single=true&output=csv");
+
+      renderTasks(danyData.slice(1), "dany");
+      renderTasks(pierreData.slice(1), "pierre");
+
+      projetData.slice(1).forEach(row => {
+        const projet = row[0];
+        const phases = row.slice(3, 9); // D à I inclus
+        if (projet) renderProgressBar(projet, phases);
+      });
+
+      setTimeout(() => location.reload(), 15000); // Actualisation toutes les 15 sec
+    }
+
+    main();
   </script>
 </body>
 </html>
