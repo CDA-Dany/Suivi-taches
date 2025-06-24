@@ -142,7 +142,7 @@
     }
 
     function renderProgressBar(project, phases) {
-      const headers = ["Permis", "Prédim", "Fab", "Plan de pose", "Liste de vérification", "Commandes Tôle, Pannes et Platines"];
+      const headers = ["Permis", "Prédim", "Fab", "Plan de pose", "Liste de vérification", "Commandes Tôle, Pannes et Platines", "Commande Pliages"];
       const total = phases.length;
       let done = 0;
       let color = "#4caf50";
@@ -203,7 +203,7 @@
 
       données.forEach(row => {
         const projet = row[0];
-        const phases = row.slice(3, 9); // colonnes D à I incluses
+        const phases = row.slice(3, 10); // colonnes D à J incluses
         if (projet) renderProgressBar(projet, phases);
       });
     }
