@@ -73,6 +73,18 @@
       height: 20px;
       transition: width 0.3s ease;
     }
+    .bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+    }
+    .status-label {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -133,25 +145,29 @@
       const total = phases.length;
       let done = 0;
       let color = "#4caf50";
+      let lastStatus = "";
 
       phases.forEach(val => {
         val = val?.toLowerCase().trim();
         if (val === "terminé" || val === "terminée") {
           done++;
-        } else if (val === "bloqué") {
-          color = "#f44336";
-        } else if (val === "en attente" && color !== "#f44336") {
-          color = "#ff9800";
-        } else if (val === "en cours" && !["#f44336", "#ff9800"].includes(color)) {
-          color = "#2196f3";
         }
+        if (val) lastStatus = val;
       });
 
+      if (lastStatus === "bloqué") color = "#f44336";
+      else if (lastStatus === "en attente") color = "#ff9800";
+      else if (lastStatus === "en cours") color = "#2196f3";
+
       const pourcentage = (done / total) * 100;
+
       const div = document.createElement("div");
       div.className = "project";
       div.innerHTML = `
-        <strong>${project}</strong>
+        <div class="bar-header">
+          <span>${project}</span>
+          <span class="status-label" style="background:${color}">${phases[phases.length - 1]} (${lastStatus})</span>
+        </div>
         <div class="bar-container">
           <div class="bar" style="width: ${pourcentage}%; background: ${color};"></div>
         </div>
